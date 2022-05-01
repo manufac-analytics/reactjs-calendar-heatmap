@@ -22,7 +22,6 @@
     "esModuleInterop": true /* https://itnext.io/great-import-schism-typescript-confusion-around-imports-explained-d512fc6769c2 */,
     "baseUrl": "." /* This must be specified if "paths" is. "paths" are resolved relative to "baseUrl" */,
     "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */,
-    "removeComments": true /* Setting to true so that it is easier (manully) write MDX files. Comments are causing MDX compiler failiure. */
+    "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
   }
 }
