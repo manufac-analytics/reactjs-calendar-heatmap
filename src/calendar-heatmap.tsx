@@ -39,57 +39,6 @@ export class CalendarHeatmap extends Component<
   labels!: Selection<SVGGElement, unknown, null, undefined>;
   buttons!: Selection<SVGGElement, unknown, null, undefined>;
 
-  constructor(props: CalendarHeatmapProps) {
-    super(props);
-
-    this.state = {
-      settings: {
-        gutter: 5,
-        item_gutter: 1,
-        width: 1000,
-        height: 200,
-        item_size: 10,
-        label_padding: 40,
-        max_block_height: 20,
-        transition_duration: 500,
-        tooltip_width: 250,
-        tooltip_padding: 15,
-      },
-      in_transition: false,
-      overview: props.overview ?? 'year',
-      history: [props.overview ?? 'year'],
-      selected: props.data.at(-1) ?? {},
-      data: calculateSummary(props.data),
-    };
-
-    this.calcDimensions = this.calcDimensions.bind(this);
-  }
-
-  componentDidMount() {
-    this.createElements();
-    this.calcDimensions();
-    window.addEventListener('resize', this.calcDimensions);
-  }
-
-  componentDidUpdate(
-    _prevProps: CalendarHeatmapProps,
-    prevState: CalendarHeatmapState
-  ) {
-    if (
-      this.state.settings.width !== prevState.settings.width ||
-      this.state.settings.height !== prevState.settings.height
-    ) {
-      this.svg
-        .attr('width', this.state.settings.width)
-        .attr('height', this.state.settings.height);
-    }
-    this.drawChart();
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.calcDimensions);
-  }
-
   createElements() {
     if (this.ref.current !== null) {
       // Create SVG container element
@@ -1749,6 +1698,57 @@ export class CalendarHeatmap extends Component<
       .ease(easeLinear)
       .style('opacity', 0)
       .remove();
+  }
+
+  constructor(props: CalendarHeatmapProps) {
+    super(props);
+
+    this.state = {
+      settings: {
+        gutter: 5,
+        item_gutter: 1,
+        width: 1000,
+        height: 200,
+        item_size: 10,
+        label_padding: 40,
+        max_block_height: 20,
+        transition_duration: 500,
+        tooltip_width: 250,
+        tooltip_padding: 15,
+      },
+      in_transition: false,
+      overview: props.overview ?? 'year',
+      history: [props.overview ?? 'year'],
+      selected: props.data.at(-1) ?? {},
+      data: calculateSummary(props.data),
+    };
+
+    this.calcDimensions = this.calcDimensions.bind(this);
+  }
+
+  componentDidMount() {
+    this.createElements();
+    this.calcDimensions();
+    window.addEventListener('resize', this.calcDimensions);
+  }
+
+  componentDidUpdate(
+    _prevProps: CalendarHeatmapProps,
+    prevState: CalendarHeatmapState
+  ) {
+    if (
+      this.state.settings.width !== prevState.settings.width ||
+      this.state.settings.height !== prevState.settings.height
+    ) {
+      this.svg
+        .attr('width', this.state.settings.width)
+        .attr('height', this.state.settings.height);
+    }
+    this.drawChart();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.calcDimensions);
   }
 
   render() {
