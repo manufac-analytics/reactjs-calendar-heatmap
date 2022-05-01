@@ -23,8 +23,6 @@
     "baseUrl": "." /* This must be specified if "paths" is. "paths" are resolved relative to "baseUrl" */,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */,
-    "removeComments": true /* Setting to true so that it is easier (manully) write MDX files. Comments are causing MDX compiler failiure. */,
-    "allowJs": true,
-    "checkJs": true // Toggle to true to improve typing
+    "removeComments": true /* Setting to true so that it is easier (manully) write MDX files. Comments are causing MDX compiler failiure. */
   }
 }
