@@ -46,7 +46,6 @@ export interface CalendarHeatmapProps {
 }
 
 export interface CalendarHeatmapState {
-  overview: CalendarHeatmapOverview;
   history: CalendarHeatmapOverview[];
   in_transition: boolean;
   selected: Partial<CalendarHeatmapDatum>;

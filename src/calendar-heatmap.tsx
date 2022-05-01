@@ -86,7 +86,7 @@ export class CalendarHeatmap extends Component<
   }
 
   drawChart() {
-    switch (this.state.overview) {
+    switch (this.state.history.at(-1)) {
       case 'global':
         this.drawGlobalOverview();
         break;
@@ -111,13 +111,6 @@ export class CalendarHeatmap extends Component<
    * Draw global overview (multiple years)
    */
   drawGlobalOverview() {
-    // Add current overview to the history
-    if (this.state.history.at(-1) !== this.state.overview) {
-      this.setState((prev) => {
-        return { ...prev, history: [...prev.history, this.state.overview] };
-      });
-    }
-
     // Define start and end of the dataset | Assumption: this.state.data is in chronological order
     let start = moment(this.state.data[0].date).startOf('year');
     let end = moment(this.state.data[this.state.data.length - 1].date).endOf(
@@ -191,12 +184,12 @@ export class CalendarHeatmap extends Component<
 
         // Set in_transition flag
         // Set selected date to the one clicked on
-        this.setState((prev) => {
+        this.setState((prev): CalendarHeatmapState => {
           return {
             ...prev,
             in_transition: true,
             selected: { ...datum, date: datum.date.toString() },
-            overview: 'year',
+            history: [...this.state.history, 'year'],
           };
         });
 
@@ -245,7 +238,7 @@ export class CalendarHeatmap extends Component<
             });
         },
         () => {
-          this.setState((prev) => {
+          this.setState((prev): CalendarHeatmapState => {
             return { ...prev, in_transition: false };
           });
         }
@@ -298,12 +291,12 @@ export class CalendarHeatmap extends Component<
       })
       .on('click', (_event, d) => {
         if (this.state.in_transition === false) {
-          this.setState((prev) => {
+          this.setState((prev): CalendarHeatmapState => {
             return {
               ...prev,
               in_transition: true,
               selected: { date: d },
-              overview: 'year',
+              history: [...this.state.history, 'year'],
             };
           });
 
@@ -320,13 +313,6 @@ export class CalendarHeatmap extends Component<
    * Draw year overview
    */
   drawYearOverview() {
-    // Add current overview to the history
-    if (this.state.history.at(-1) !== this.state.overview) {
-      this.setState((prev) => {
-        return { ...prev, history: [...prev.history, this.state.overview] };
-      });
-    }
-
     // Define start and end date of the selected year
     let start_of_year = moment(this.state.selected.date).startOf('year');
     let end_of_year = moment(this.state.selected.date).endOf('year');
@@ -415,12 +401,12 @@ export class CalendarHeatmap extends Component<
       })
       .on('click', (_event, d) => {
         if (this.state.in_transition === false && d.total !== 0) {
-          this.setState((prev) => {
+          this.setState((prev): CalendarHeatmapState => {
             return {
               ...prev,
               in_transition: true,
               selected: d,
-              overview: 'day',
+              history: [...this.state.history, 'day'],
             };
           });
 
@@ -545,7 +531,7 @@ export class CalendarHeatmap extends Component<
             });
         },
         () => {
-          this.setState((prev) => {
+          this.setState((prev): CalendarHeatmapState => {
             return { ...prev, in_transition: false };
           });
         }
@@ -609,12 +595,12 @@ export class CalendarHeatmap extends Component<
             );
           });
           if (month_data.length > 0) {
-            this.setState((prev) => {
+            this.setState((prev): CalendarHeatmapState => {
               return {
                 ...prev,
                 in_transition: true,
                 selected: { date: d.toISOString() },
-                overview: 'month',
+                history: [...this.state.history, 'month'],
               };
             });
 
@@ -694,13 +680,6 @@ export class CalendarHeatmap extends Component<
    * Draw month overview
    */
   drawMonthOverview() {
-    // Add current overview to the history
-    if (this.state.history.at(-1) !== this.state.overview) {
-      this.setState((prev) => {
-        return { ...prev, history: [...prev.history, this.state.overview] };
-      });
-    }
-
     // Define beginning and end of the month
     let start_of_month = moment(this.state.selected.date).startOf('month');
     let end_of_month = moment(this.state.selected.date).endOf('month');
@@ -791,12 +770,12 @@ export class CalendarHeatmap extends Component<
       .attr('offset', 0)
       .on('click', (_event, d) => {
         if (this.state.in_transition === false && d.total !== 0) {
-          this.setState((prev) => {
+          this.setState((prev): CalendarHeatmapState => {
             return {
               ...prev,
               in_transition: true,
               selected: d,
-              overview: 'day',
+              history: [...this.state.history, 'day'],
             };
           });
           // Hide tooltip
@@ -880,7 +859,7 @@ export class CalendarHeatmap extends Component<
               });
           },
           () => {
-            this.setState((prev) => {
+            this.setState((prev): CalendarHeatmapState => {
               return { ...prev, in_transition: false };
             });
           }
@@ -938,12 +917,12 @@ export class CalendarHeatmap extends Component<
             );
           });
           if (week_data.length > 0) {
-            this.setState((prev) => {
+            this.setState((prev): CalendarHeatmapState => {
               return {
                 ...prev,
                 in_transition: true,
                 selected: { date: d.toISOString() },
-                overview: 'week',
+                history: [...this.state.history, 'week'],
               };
             });
             // Hide tooltip
@@ -1006,13 +985,6 @@ export class CalendarHeatmap extends Component<
    * Draw week overview
    */
   drawWeekOverview() {
-    // Add current overview to the history
-    if (this.state.history.at(-1) !== this.state.overview) {
-      this.setState((prev) => {
-        return { ...prev, history: [...prev.history, this.state.overview] };
-      });
-    }
-
     // Define beginning and end of the week
     let start_of_week = moment(this.state.selected.date).startOf('week');
     let end_of_week = moment(this.state.selected.date).endOf('week');
@@ -1101,12 +1073,12 @@ export class CalendarHeatmap extends Component<
       .attr('offset', 0)
       .on('click', (_event, d) => {
         if (this.state.in_transition === false && d.total !== 0) {
-          this.setState((prev) => {
+          this.setState((prev): CalendarHeatmapState => {
             return {
               ...prev,
               in_transition: true,
               selected: d,
-              overview: 'day',
+              history: [...this.state.history, 'day'],
             };
           });
           // Hide tooltip
@@ -1190,7 +1162,7 @@ export class CalendarHeatmap extends Component<
               });
           },
           () => {
-            this.setState((prev) => {
+            this.setState((prev): CalendarHeatmapState => {
               return { ...prev, in_transition: false };
             });
           }
@@ -1291,13 +1263,6 @@ export class CalendarHeatmap extends Component<
    * Draw day overview
    */
   drawDayOverview() {
-    // Add current overview to the history
-    if (this.state.history.at(-1) !== this.state.overview) {
-      this.setState((prev) => {
-        return { ...prev, history: [...prev.history, this.state.overview] };
-      });
-    }
-
     let project_labels =
       this.state.selected?.summary?.map((project) => {
         return project.name;
@@ -1407,7 +1372,7 @@ export class CalendarHeatmap extends Component<
             });
         },
         () => {
-          this.setState((prev) => {
+          this.setState((prev): CalendarHeatmapState => {
             return { ...prev, in_transition: false };
           });
         }
@@ -1545,25 +1510,30 @@ export class CalendarHeatmap extends Component<
       .style('stroke', 'rgb(170, 170, 170)')
       .on('click', () => {
         if (this.state.in_transition === false) {
-          this.setState((prev) => {
+          // Clean the canvas from whichever overview type was on
+          switch (this.state.history.at(-1)) {
+            case 'year':
+              this.removeYearOverview();
+              break;
+            case 'month':
+              this.removeMonthOverview();
+              break;
+            case 'week':
+              this.removeWeekOverview();
+              break;
+            case 'day':
+              this.removeDayOverview();
+              break;
+            default:
+              break;
+          }
+          this.setState((prev): CalendarHeatmapState => {
             return {
               ...prev,
               in_transition: true,
-              overview: prev.history.at(-1) ?? 'day',
               history: [...prev.history.slice(0, -1)],
             };
           });
-
-          // Clean the canvas from whichever overview type was on
-          if (this.state.overview === 'year') {
-            this.removeYearOverview();
-          } else if (this.state.overview === 'month') {
-            this.removeMonthOverview();
-          } else if (this.state.overview === 'week') {
-            this.removeWeekOverview();
-          } else if (this.state.overview === 'day') {
-            this.removeDayOverview();
-          }
         }
       });
     button
@@ -1717,7 +1687,6 @@ export class CalendarHeatmap extends Component<
         tooltip_padding: 15,
       },
       in_transition: false,
-      overview: props.overview ?? 'year',
       history: [props.overview ?? 'year'],
       selected: props.data.at(-1) ?? {},
       data: calculateSummary(props.data),
