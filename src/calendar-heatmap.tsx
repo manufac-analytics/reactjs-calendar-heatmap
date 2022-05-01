@@ -81,8 +81,6 @@ export class CalendarHeatmap extends Component<
         },
       };
     });
-
-    this.drawChart();
   }
 
   drawChart() {
@@ -1712,8 +1710,11 @@ export class CalendarHeatmap extends Component<
       this.svg
         .attr('width', this.state.settings.width)
         .attr('height', this.state.settings.height);
+      this.drawChart();
     }
-    this.drawChart();
+    if (this.state.history.at(-1) !== prevState.history.at(-1)) {
+      this.drawChart();
+    }
   }
 
   componentWillUnmount() {
