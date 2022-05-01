@@ -51,4 +51,5 @@ export interface CalendarHeatmapState {
   in_transition: boolean;
   selected: Partial<CalendarHeatmapDatum>;
   settings: CalendarHeatmapSettings;
+  data: CalendarHeatmapDatum[];
 }
