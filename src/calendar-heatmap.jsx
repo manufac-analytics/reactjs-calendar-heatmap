@@ -140,7 +140,7 @@ export class CalendarHeatmap extends Component {
   }
 
   drawChart() {
-    switch (this.overview) {
+    switch (this.state.history.at(-1)) {
       case 'global':
         this.drawGlobalOverview();
         break;
@@ -246,6 +246,7 @@ export class CalendarHeatmap extends Component {
           ...prev,
           in_transition: true,
           selected: datum,
+          history: [...this.state.history, 'year'],
         }));
 
         // Hide tooltip
@@ -253,10 +254,6 @@ export class CalendarHeatmap extends Component {
 
         // Remove all global overview related items and labels
         this.removeGlobalOverview();
-
-        // Redraw the chart
-        this.overview = 'year';
-        this.drawChart();
       })
       .style('opacity', 0)
       .on('mouseover', (_event, d) => {
@@ -357,6 +354,7 @@ export class CalendarHeatmap extends Component {
           ...prev,
           in_transition: true,
           selected: { date: d },
+          history: [...this.state.history, 'year'],
         }));
 
         // Hide tooltip
@@ -364,10 +362,6 @@ export class CalendarHeatmap extends Component {
 
         // Remove all global overview related items and labels
         this.removeGlobalOverview();
-
-        // Redraw the chart
-        this.overview = 'year';
-        this.drawChart();
       });
   }
 
@@ -474,6 +468,7 @@ export class CalendarHeatmap extends Component {
           ...prev,
           in_transition: true,
           selected: d,
+          history: [...this.state.history, 'day'],
         }));
 
         // Hide tooltip
@@ -481,10 +476,6 @@ export class CalendarHeatmap extends Component {
 
         // Remove all year overview related items and labels
         this.removeYearOverview();
-
-        // Redraw the chart
-        this.overview = 'day';
-        this.drawChart();
       })
       .on('mouseover', (event, d) => {
         if (this.state.in_transition) {
@@ -679,6 +670,7 @@ export class CalendarHeatmap extends Component {
           ...prev,
           in_transition: true,
           selected: { date: d },
+          history: [...this.state.history, 'month'],
         }));
 
         // Hide tooltip
@@ -686,10 +678,6 @@ export class CalendarHeatmap extends Component {
 
         // Remove all year overview related items and labels
         this.removeYearOverview();
-
-        // Redraw the chart
-        this.overview = 'month';
-        this.drawChart();
       });
 
     // Add day labels
@@ -858,6 +846,7 @@ export class CalendarHeatmap extends Component {
           ...prev,
           in_transition: true,
           selected: d,
+          history: [...this.state.history, 'day'],
         }));
 
         // Hide tooltip
@@ -865,10 +854,6 @@ export class CalendarHeatmap extends Component {
 
         // Remove all month overview related items and labels
         this.removeMonthOverview();
-
-        // Redraw the chart
-        this.overview = 'day';
-        this.drawChart();
       });
 
     let item_width =
@@ -1016,6 +1001,7 @@ export class CalendarHeatmap extends Component {
           ...prev,
           in_transition: true,
           selected: { date: d },
+          history: [...this.state.history, 'week'],
         }));
 
         // Hide tooltip
@@ -1023,10 +1009,6 @@ export class CalendarHeatmap extends Component {
 
         // Remove all year overview related items and labels
         this.removeMonthOverview();
-
-        // Redraw the chart
-        this.overview = 'week';
-        this.drawChart();
       });
 
     // Add day labels
@@ -1184,6 +1166,7 @@ export class CalendarHeatmap extends Component {
           ...prev,
           in_transition: true,
           selected: d,
+          history: [...this.state.history, 'day'],
         }));
 
         // Hide tooltip
@@ -1191,10 +1174,6 @@ export class CalendarHeatmap extends Component {
 
         // Remove all week overview related items and labels
         this.removeWeekOverview();
-
-        // Redraw the chart
-        this.overview = 'day';
-        this.drawChart();
       });
 
     let item_width =
@@ -1629,13 +1608,13 @@ export class CalendarHeatmap extends Component {
         }
 
         // Clean the canvas from whichever overview type was on
-        if (this.overview === 'year') {
+        if (this.state.history.at(-1) === 'year') {
           this.removeYearOverview();
-        } else if (this.overview === 'month') {
+        } else if (this.state.history.at(-1) === 'month') {
           this.removeMonthOverview();
-        } else if (this.overview === 'week') {
+        } else if (this.state.history.at(-1) === 'week') {
           this.removeWeekOverview();
-        } else if (this.overview === 'day') {
+        } else if (this.state.history.at(-1) === 'day') {
           this.removeDayOverview();
         }
 
