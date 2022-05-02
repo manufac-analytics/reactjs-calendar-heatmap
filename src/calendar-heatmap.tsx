@@ -1688,7 +1688,10 @@ export class CalendarHeatmap extends Component<
       },
       in_transition: false,
       // First entry for history should be 'global', so that even if the user enters the chart first time he will be able to go back till global overview
-      history: ['global', props.overview ?? 'year'],
+      history:
+        props.overview === 'global'
+          ? [props.overview]
+          : ['global', props.overview ?? 'year'],
       selected: props.data.at(-1) ?? {},
       data: calculateSummary(props.data),
     };
