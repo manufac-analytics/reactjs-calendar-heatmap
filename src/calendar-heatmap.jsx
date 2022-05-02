@@ -13,7 +13,11 @@ import {
   scaleBand,
   scaleTime,
 } from 'd3';
-import { createColorGenerator, getYearSummary, addSummary } from './utils';
+import {
+  createColorGenerator,
+  getYearSummary,
+  calculateSummary,
+} from './utils';
 import './calendar-heatmap.css';
 
 export class CalendarHeatmap extends Component {
@@ -23,15 +27,17 @@ export class CalendarHeatmap extends Component {
   constructor(props) {
     super(props);
 
-     /**
+    /**
      * @type {import('./interfaces').CalendarHeatmapProps}
      */
     this.props = props;
 
-   /**
+    /**
      * @type {import('./interfaces').CalendarHeatmapState}
      */
-    this.state = {};
+    this.state = {
+      data: calculateSummary(props.data),
+    };
 
     /**
      * @type {import('./interfaces').CalendarHeatmapSettings}
@@ -59,15 +65,33 @@ export class CalendarHeatmap extends Component {
     this.ref = createRef();
   }
 
+  /**
+   *
+   * @param {import('./interfaces').CalendarHeatmapProps} nextProps
+   * @param {import('./interfaces').CalendarHeatmapState} prevState
+   * @returns
+   */
+  static getDerivedStateFromProps(nextProps, prevState) {
+    /**
+     * @type {import('./interfaces').CalendarHeatmapSettings | null}
+     */
+    let output = null;
+    if (nextProps.data !== prevState.data) {
+      return {
+        prevState,
+        data: calculateSummary(nextProps.data),
+      };
+    }
+    return output;
+  }
+
   componentDidMount() {
     this.createElements();
-    addSummary(this.props.data);
     this.drawChart();
     window.addEventListener('resize', this.calcDimensions);
   }
 
   componentDidUpdate() {
-    addSummary(this.props.data);
     this.drawChart();
   }
 
@@ -110,13 +134,7 @@ export class CalendarHeatmap extends Component {
       ?.attr('width', this.settings.width)
       .attr('height', this.settings.height);
 
-    if (
-      Array.isArray(this.props.data) &&
-      this.props.data[0].summary !== null &&
-      this.props.data[0].summary !== undefined
-    ) {
-      this.drawChart();
-    }
+    this.drawChart();
   }
 
   drawChart() {
@@ -150,9 +168,9 @@ export class CalendarHeatmap extends Component {
       this.history.push(this.overview);
     }
 
-    // Define start and end of the dataset | Assumption: this.props.data is in chronological order
-    let start = moment(this.props.data[0].date).startOf('year');
-    let end = moment(this.props.data[this.props.data.length - 1].date).endOf(
+    // Define start and end of the dataset | Assumption: this.state.data is in chronological order
+    let start = moment(this.state.data[0].date).startOf('year');
+    let end = moment(this.state.data[this.state.data.length - 1].date).endOf(
       'year'
     );
 
@@ -161,13 +179,13 @@ export class CalendarHeatmap extends Component {
       let date = moment(d);
       return {
         date: date,
-        total: this.props.data.reduce((prev, current) => {
+        total: this.state.data.reduce((prev, current) => {
           if (moment(current.date).year() === date.year()) {
             prev += current.total;
           }
           return prev;
         }, 0),
-        summary: getYearSummary(this.props.data, d),
+        summary: getYearSummary(this.state.data, d),
       };
     });
 
@@ -369,7 +387,7 @@ export class CalendarHeatmap extends Component {
     let end_of_year = moment(this.selected.date).endOf('year');
 
     // Filter data down to the selected year
-    let year_data = this.props.data.filter((d) => {
+    let year_data = this.state.data.filter((d) => {
       return start_of_year <= moment(d.date) && moment(d.date) < end_of_year;
     });
 
@@ -638,7 +656,7 @@ export class CalendarHeatmap extends Component {
         }
 
         // Check month data
-        let month_data = this.props.data.filter((e) => {
+        let month_data = this.state.data.filter((e) => {
           return (
             moment(d).startOf('month') <= moment(e.date) &&
             moment(e.date) < moment(d).endOf('month')
@@ -741,7 +759,7 @@ export class CalendarHeatmap extends Component {
     let end_of_month = moment(this.selected.date).endOf('month');
 
     // Filter data down to the selected month
-    let month_data = this.props.data.filter((d) => {
+    let month_data = this.state.data.filter((d) => {
       return start_of_month <= moment(d.date) && moment(d.date) < end_of_month;
     });
     const monthSummaries = month_data.flatMap((e) => e.summary);
@@ -962,7 +980,7 @@ export class CalendarHeatmap extends Component {
         }
 
         // Check week data
-        let week_data = this.props.data.filter((e) => {
+        let week_data = this.state.data.filter((e) => {
           return (
             d.startOf('week') <= moment(e.date) &&
             moment(e.date) < d.endOf('week')
@@ -1057,7 +1075,7 @@ export class CalendarHeatmap extends Component {
     let end_of_week = moment(this.selected.date).endOf('week');
 
     // Filter data down to the selected week
-    let week_data = this.props.data.filter((d) => {
+    let week_data = this.state.data.filter((d) => {
       return start_of_week <= moment(d.date) && moment(d.date) < end_of_week;
     });
     const weekSummaries = week_data.flatMap((e) => e.summary);
@@ -1337,7 +1355,7 @@ export class CalendarHeatmap extends Component {
 
     // Initialize selected date to today if it was not set
     if (!Object.keys(this.selected).length) {
-      this.selected = this.props.data[this.props.data.length - 1];
+      this.selected = this.state.data[this.state.data.length - 1];
     }
 
     let project_labels = this.selected.summary.map((project) => {
@@ -1352,7 +1370,7 @@ export class CalendarHeatmap extends Component {
     let end_of_day = moment(this.selected.date).endOf('day');
 
     // Filter data down to the selected week
-    let day_data = this.props.data.filter((d) => {
+    let day_data = this.state.data.filter((d) => {
       return start_of_day <= moment(d.date) && moment(d.date) < end_of_day;
     });
     const daySummaries = day_data.flatMap((e) => e.summary);
@@ -1735,9 +1753,7 @@ export class CalendarHeatmap extends Component {
   }
 
   render() {
-    return (
-      <div className="calendarHeatmap" ref={this.ref} />
-    );
+    return <div className="calendarHeatmap" ref={this.ref} />;
   }
 }
 

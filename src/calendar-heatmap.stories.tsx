@@ -1,7 +1,8 @@
 import { timeDays, range } from 'd3';
 import type { ComponentMeta, ComponentStory } from '@storybook/react';
 import { CalendarHeatmap } from './calendar-heatmap';
-import type { CalendarHeatmapDatum } from './interfaces';
+import type { CalendarHeatmapDatum, CalendarHeatmapProps } from './interfaces';
+import type { ComponentType } from 'react';
 
 const generateDate = (date: Date): Date => {
   const projectDate = date;
@@ -43,9 +44,9 @@ function generateStorySampleData(yearsAgo: number): CalendarHeatmapDatum[] {
   return data;
 }
 
-const Meta: ComponentMeta<typeof CalendarHeatmap> = {
+const Meta: ComponentMeta<ComponentType<CalendarHeatmapProps>> = {
   title: 'Calendar Heat Map',
-  component: CalendarHeatmap,
+  component: CalendarHeatmap as ComponentType<CalendarHeatmapProps>,
   args: {
     data: generateStorySampleData(10),
     onTooltip: (d: { value: unknown }) => {
@@ -63,9 +64,9 @@ const Meta: ComponentMeta<typeof CalendarHeatmap> = {
 };
 export default Meta;
 
-const Template: ComponentStory<typeof CalendarHeatmap> = (args) => (
-  <CalendarHeatmap {...args} />
-);
+const Template: ComponentStory<ComponentType<CalendarHeatmapProps>> = (
+  args
+) => <CalendarHeatmap {...args} />;
 
 export const DefaultColor = Template.bind({});
 
