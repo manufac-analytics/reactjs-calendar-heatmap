@@ -37,22 +37,18 @@ export class CalendarHeatmap extends Component {
      */
     this.state = {
       data: calculateSummary(props.data),
-    };
-
-    /**
-     * @type {import('./interfaces').CalendarHeatmapSettings}
-     */
-    this.settings = {
-      gutter: 5,
-      item_gutter: 1,
-      width: 1000,
-      height: 200,
-      item_size: 10,
-      label_padding: 40,
-      max_block_height: 20,
-      transition_duration: 500,
-      tooltip_width: 250,
-      tooltip_padding: 15,
+      settings: {
+        gutter: 5,
+        item_gutter: 1,
+        width: 1000,
+        height: 200,
+        item_size: 10,
+        label_padding: 40,
+        max_block_height: 20,
+        transition_duration: 500,
+        tooltip_width: 250,
+        tooltip_padding: 15,
+      },
     };
 
     // Potential states
@@ -67,21 +63,30 @@ export class CalendarHeatmap extends Component {
 
   componentDidMount() {
     this.createElements();
-    this.drawChart();
+    this.calcDimensions();
     window.addEventListener('resize', this.calcDimensions);
   }
 
   /**
    *
    * @param {import('./interfaces').CalendarHeatmapProps} prevProps
+   * @param {import('./interfaces').CalendarHeatmapState} prevState
    */
-  componentDidUpdate(prevProps) {
-    this.drawChart();
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      this.state.settings.width !== prevState.settings.width ||
+      this.state.settings.height !== prevState.settings.height
+    ) {
+      this.svg
+        .attr('width', this.state.settings.width)
+        .attr('height', this.state.settings.height);
+    }
     if (prevProps.data !== this.props.data) {
       this.setState((prev) => {
         return { ...prev, data: calculateSummary(this.props.data) };
       });
     }
+    this.drawChart();
   }
 
   componentWillUnmount() {
@@ -89,15 +94,15 @@ export class CalendarHeatmap extends Component {
   }
 
   createElements() {
-    // Create svg element
-    this.svg = select(this.ref.current).append('svg').attr('class', 'svg');
+    if (this.ref.current !== null) {
+      // Create SVG container element
+      this.svg = select(this.ref.current).append('svg').attr('class', 'svg');
 
-    // Create children group elements
-    this.items = this.svg.append('g');
-    this.labels = this.svg.append('g');
-    this.buttons = this.svg.append('g');
-
-    this.calcDimensions();
+      // Create children group elements
+      this.items = this.svg.append('g');
+      this.labels = this.svg.append('g');
+      this.buttons = this.svg.append('g');
+    }
   }
 
   // Calculate dimensions based on available width
@@ -110,20 +115,26 @@ export class CalendarHeatmap extends Component {
     let colIndex = Math.trunc(dayIndex / 7);
     let numWeeks = colIndex + 1;
 
-    const offsetWidth = this.ref.current?.offsetWidth ?? NaN;
-    this.settings.width = offsetWidth < 1000 ? 1000 : offsetWidth;
-
-    this.settings.item_size =
-      (this.settings.width - this.settings.label_padding) / numWeeks -
-      this.settings.gutter;
-    this.settings.height =
-      this.settings.label_padding +
-      7 * (this.settings.item_size + this.settings.gutter);
-    this.svg
-      ?.attr('width', this.settings.width)
-      .attr('height', this.settings.height);
-
-    this.drawChart();
+    this.setState((prevState) => {
+      const offsetWidth = this.ref.current?.offsetWidth ?? NaN;
+      const newWidth = offsetWidth < 1000 ? 1000 : offsetWidth;
+      const newItemSize =
+        (this.state.settings.width - this.state.settings.label_padding) /
+          numWeeks -
+        this.state.settings.gutter;
+      const newHeight =
+        this.state.settings.label_padding +
+        7 * (this.state.settings.item_size + this.state.settings.gutter);
+      return {
+        ...prevState,
+        settings: {
+          ...prevState.settings,
+          width: newWidth,
+          item_size: newItemSize,
+          height: newHeight,
+        },
+      };
+    });
   }
 
   drawChart() {
@@ -195,7 +206,7 @@ export class CalendarHeatmap extends Component {
       return moment(d);
     });
     let yearScale = scaleBand()
-      .rangeRound([0, this.settings.width])
+      .rangeRound([0, this.state.settings.width])
       .padding([0.05])
       .domain(
         year_labels.map((d) => {
@@ -214,17 +225,17 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .attr('width', () => {
         return (
-          (this.settings.width - this.settings.label_padding) /
+          (this.state.settings.width - this.state.settings.label_padding) /
             year_labels.length -
-          this.settings.gutter * 5
+          this.state.settings.gutter * 5
         );
       })
       .attr('height', () => {
-        return this.settings.height - this.settings.label_padding;
+        return this.state.settings.height - this.state.settings.label_padding;
       })
       .attr('transform', (d) => {
         return `translate(${yearScale(d.date.year())}, ${
-          this.settings.tooltip_padding * 2
+          this.state.settings.tooltip_padding * 2
         })`;
       })
       .attr('fill', (d) => colorGenerator(d.total))
@@ -265,10 +276,10 @@ export class CalendarHeatmap extends Component {
       })
       .transition()
       .delay((_d, i) => {
-        return (this.settings.transition_duration * (i + 1)) / 10;
+        return (this.state.settings.transition_duration * (i + 1)) / 10;
       })
       .duration(() => {
-        return this.settings.transition_duration;
+        return this.state.settings.transition_duration;
       })
       .ease(easeLinear)
       .style('opacity', 1)
@@ -304,7 +315,7 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .text((d) => {
         return d.year();
@@ -312,7 +323,7 @@ export class CalendarHeatmap extends Component {
       .attr('x', (d) => {
         return yearScale(d.year());
       })
-      .attr('y', this.settings.label_padding / 2)
+      .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (_event, year_label) => {
         if (this.in_transition) {
           return;
@@ -321,7 +332,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-year')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             return moment(d.date).year() === year_label.year() ? 1 : 0.1;
@@ -335,7 +346,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-year')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 1);
       })
@@ -397,26 +408,27 @@ export class CalendarHeatmap extends Component {
       );
       let colIndex = Math.trunc(dayIndex / 7);
       return (
-        colIndex * (this.settings.item_size + this.settings.gutter) +
-        this.settings.label_padding
+        colIndex *
+          (this.state.settings.item_size + this.state.settings.gutter) +
+        this.state.settings.label_padding
       );
     };
 
     let calcItemY = (d) => {
       return (
-        this.settings.label_padding +
+        this.state.settings.label_padding +
         moment(d.date).weekday() *
-          (this.settings.item_size + this.settings.gutter)
+          (this.state.settings.item_size + this.state.settings.gutter)
       );
     };
 
     let calcItemSize = (d) => {
       if (max_value <= 0) {
-        return this.settings.item_size;
+        return this.state.settings.item_size;
       }
       return (
-        this.settings.item_size * 0.75 +
-        ((this.settings.item_size * d.total) / max_value) * 0.25
+        this.state.settings.item_size * 0.75 +
+        ((this.state.settings.item_size * d.total) / max_value) * 0.25
       );
     };
 
@@ -430,10 +442,14 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .style('opacity', 0)
       .attr('x', (d) => {
-        return calcItemX(d) + (this.settings.item_size - calcItemSize(d)) / 2;
+        return (
+          calcItemX(d) + (this.state.settings.item_size - calcItemSize(d)) / 2
+        );
       })
       .attr('y', (d) => {
-        return calcItemY(d) + (this.settings.item_size - calcItemSize(d)) / 2;
+        return (
+          calcItemY(d) + (this.state.settings.item_size - calcItemSize(d)) / 2
+        );
       })
       .attr('rx', (d) => {
         return calcItemSize(d);
@@ -486,33 +502,39 @@ export class CalendarHeatmap extends Component {
         let repeat = () => {
           circle = circle
             .transition()
-            .duration(this.settings.transition_duration)
+            .duration(this.state.settings.transition_duration)
             .ease(easeLinear)
             .attr('x', (d) => {
               return (
                 calcItemX(d) -
-                (this.settings.item_size * 1.1 - this.settings.item_size) / 2
+                (this.state.settings.item_size * 1.1 -
+                  this.state.settings.item_size) /
+                  2
               );
             })
             .attr('y', (d) => {
               return (
                 calcItemY(d) -
-                (this.settings.item_size * 1.1 - this.settings.item_size) / 2
+                (this.state.settings.item_size * 1.1 -
+                  this.state.settings.item_size) /
+                  2
               );
             })
-            .attr('width', this.settings.item_size * 1.1)
-            .attr('height', this.settings.item_size * 1.1)
+            .attr('width', this.state.settings.item_size * 1.1)
+            .attr('height', this.state.settings.item_size * 1.1)
             .transition()
-            .duration(this.settings.transition_duration)
+            .duration(this.state.settings.transition_duration)
             .ease(easeLinear)
             .attr('x', (d) => {
               return (
-                calcItemX(d) + (this.settings.item_size - calcItemSize(d)) / 2
+                calcItemX(d) +
+                (this.state.settings.item_size - calcItemSize(d)) / 2
               );
             })
             .attr('y', (d) => {
               return (
-                calcItemY(d) + (this.settings.item_size - calcItemSize(d)) / 2
+                calcItemY(d) +
+                (this.state.settings.item_size - calcItemSize(d)) / 2
               );
             })
             .attr('width', (d) => {
@@ -535,16 +557,18 @@ export class CalendarHeatmap extends Component {
         // Set circle radius back to what its supposed to be
         select(event.currentTarget)
           .transition()
-          .duration(this.settings.transition_duration / 2)
+          .duration(this.state.settings.transition_duration / 2)
           .ease(easeLinear)
           .attr('x', (d) => {
             return (
-              calcItemX(d) + (this.settings.item_size - calcItemSize(d)) / 2
+              calcItemX(d) +
+              (this.state.settings.item_size - calcItemSize(d)) / 2
             );
           })
           .attr('y', (d) => {
             return (
-              calcItemY(d) + (this.settings.item_size - calcItemSize(d)) / 2
+              calcItemY(d) +
+              (this.state.settings.item_size - calcItemSize(d)) / 2
             );
           })
           .attr('width', (d) => {
@@ -561,11 +585,11 @@ export class CalendarHeatmap extends Component {
       .delay(() => {
         return (
           (Math.cos(Math.PI * Math.random()) + 1) *
-          this.settings.transition_duration
+          this.state.settings.transition_duration
         );
       })
       .duration(() => {
-        return this.settings.transition_duration;
+        return this.state.settings.transition_duration;
       })
       .ease(easeLinear)
       .style('opacity', 1)
@@ -591,7 +615,7 @@ export class CalendarHeatmap extends Component {
     // Add month labels
     let month_labels = timeMonths(start_of_year, end_of_year);
     let monthScale = scaleLinear()
-      .range([0, this.settings.width])
+      .range([0, this.state.settings.width])
       .domain([0, month_labels.length]);
     this.labels.selectAll('.label-month').remove();
     this.labels
@@ -603,7 +627,7 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .text((d) => {
         return d.toLocaleDateString('en-us', { month: 'short' });
@@ -611,7 +635,7 @@ export class CalendarHeatmap extends Component {
       .attr('x', (d, i) => {
         return monthScale(i) + (monthScale(i) - monthScale(i - 1)) / 2;
       })
-      .attr('y', this.settings.label_padding / 2)
+      .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (event, d) => {
         if (this.in_transition) {
           return;
@@ -621,7 +645,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-circle')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             return moment(d.date).isSame(selected_month, 'month') ? 1 : 0.1;
@@ -635,7 +659,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-circle')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 1);
       })
@@ -676,7 +700,10 @@ export class CalendarHeatmap extends Component {
     // Add day labels
     let day_labels = timeDays(moment().startOf('week'), moment().endOf('week'));
     let dayScale = scaleBand()
-      .rangeRound([this.settings.label_padding, this.settings.height])
+      .rangeRound([
+        this.state.settings.label_padding,
+        this.state.settings.height,
+      ])
       .domain(
         day_labels.map((d) => {
           return moment(d).weekday();
@@ -691,13 +718,13 @@ export class CalendarHeatmap extends Component {
       .attr('class', 'label label-day')
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
-      .attr('x', this.settings.label_padding / 3)
+      .attr('x', this.state.settings.label_padding / 3)
       .attr('y', (d, i) => {
         return dayScale(i) + dayScale.bandwidth() / 1.75;
       })
       .style('text-anchor', 'left')
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .text((d) => {
         return moment(d).format('dddd')[0];
@@ -711,7 +738,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-circle')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             return moment(d.date).day() === selected_day.day() ? 1 : 0.1;
@@ -725,7 +752,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-circle')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 1);
       });
@@ -766,7 +793,10 @@ export class CalendarHeatmap extends Component {
     // Define day labels and axis
     let day_labels = timeDays(moment().startOf('week'), moment().endOf('week'));
     let dayScale = scaleBand()
-      .rangeRound([this.settings.label_padding, this.settings.height])
+      .rangeRound([
+        this.state.settings.label_padding,
+        this.state.settings.height,
+      ])
       .domain(
         day_labels.map((d) => {
           return moment(d).weekday();
@@ -779,7 +809,10 @@ export class CalendarHeatmap extends Component {
       week_labels.push(start_of_month.add(1, 'week').clone());
     }
     let weekScale = scaleBand()
-      .rangeRound([this.settings.label_padding, this.settings.width])
+      .rangeRound([
+        this.state.settings.label_padding,
+        this.state.settings.width,
+      ])
       .padding([0.05])
       .domain(
         week_labels.map((weekday) => {
@@ -798,13 +831,16 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .attr('width', () => {
         return (
-          (this.settings.width - this.settings.label_padding) /
+          (this.state.settings.width - this.state.settings.label_padding) /
             week_labels.length -
-          this.settings.gutter * 5
+          this.state.settings.gutter * 5
         );
       })
       .attr('height', () => {
-        return Math.min(dayScale.bandwidth(), this.settings.max_block_height);
+        return Math.min(
+          dayScale.bandwidth(),
+          this.state.settings.max_block_height
+        );
       })
       .attr('transform', (d) => {
         return `translate(${weekScale(moment(d.date).week())}, ${
@@ -845,11 +881,12 @@ export class CalendarHeatmap extends Component {
       });
 
     let item_width =
-      (this.settings.width - this.settings.label_padding) / week_labels.length -
-      this.settings.gutter * 5;
+      (this.state.settings.width - this.state.settings.label_padding) /
+        week_labels.length -
+      this.state.settings.gutter * 5;
     let itemScale = scaleLinear().rangeRound([0, item_width]);
 
-    let item_gutter = this.settings.item_gutter;
+    let item_gutter = this.state.settings.item_gutter;
     item_block
       .selectAll('.item-block-rect')
       .data((d) => d.summary)
@@ -870,7 +907,10 @@ export class CalendarHeatmap extends Component {
         return Math.max(itemScale(d.value) - item_gutter, 1);
       })
       .attr('height', () => {
-        return Math.min(dayScale.bandwidth(), this.settings.max_block_height);
+        return Math.min(
+          dayScale.bandwidth(),
+          this.state.settings.max_block_height
+        );
       })
       .attr('fill', (d) => colorGenerator(d.value))
       .style('opacity', 0)
@@ -890,11 +930,11 @@ export class CalendarHeatmap extends Component {
       .delay(() => {
         return (
           (Math.cos(Math.PI * Math.random()) + 1) *
-          this.settings.transition_duration
+          this.state.settings.transition_duration
         );
       })
       .duration(() => {
-        return this.settings.transition_duration;
+        return this.state.settings.transition_duration;
       })
       .ease(easeLinear)
       .style('opacity', 1)
@@ -928,7 +968,7 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
       .attr('font-size', () => {
-        return Math.floor(this.settings.label_padding / 3) + 'px';
+        return Math.floor(this.state.settings.label_padding / 3) + 'px';
       })
       .text((d) => {
         return `Week ${d.week()}`;
@@ -936,7 +976,7 @@ export class CalendarHeatmap extends Component {
       .attr('x', (d) => {
         return weekScale(d.week());
       })
-      .attr('y', this.settings.label_padding / 2)
+      .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (event, weekday) => {
         if (this.in_transition) {
           return;
@@ -945,7 +985,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-month')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             return moment(d.date).week() === weekday.week() ? 1 : 0.1;
@@ -959,7 +999,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-month')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 1);
       })
@@ -1007,13 +1047,13 @@ export class CalendarHeatmap extends Component {
       .attr('class', 'label label-day')
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
-      .attr('x', this.settings.label_padding / 3)
+      .attr('x', this.state.settings.label_padding / 3)
       .attr('y', (d, i) => {
         return dayScale(i) + dayScale.bandwidth() / 1.75;
       })
       .style('text-anchor', 'left')
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .text((d) => {
         return moment(d).format('dddd')[0];
@@ -1027,7 +1067,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-month')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             return moment(d.date).day() === selected_day.day() ? 1 : 0.1;
@@ -1041,7 +1081,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-month')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 1);
       });
@@ -1082,7 +1122,10 @@ export class CalendarHeatmap extends Component {
     // Define day labels and axis
     let day_labels = timeDays(moment().startOf('week'), moment().endOf('week'));
     let dayScale = scaleBand()
-      .rangeRound([this.settings.label_padding, this.settings.height])
+      .rangeRound([
+        this.state.settings.label_padding,
+        this.state.settings.height,
+      ])
       .domain(
         day_labels.map((d) => {
           return moment(d).weekday();
@@ -1092,7 +1135,10 @@ export class CalendarHeatmap extends Component {
     // Define week labels and axis
     let week_labels = [start_of_week];
     let weekScale = scaleBand()
-      .rangeRound([this.settings.label_padding, this.settings.width])
+      .rangeRound([
+        this.state.settings.label_padding,
+        this.state.settings.width,
+      ])
       .padding([0.01])
       .domain(
         week_labels.map((weekday) => {
@@ -1111,13 +1157,16 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .attr('width', () => {
         return (
-          (this.settings.width - this.settings.label_padding) /
+          (this.state.settings.width - this.state.settings.label_padding) /
             week_labels.length -
-          this.settings.gutter * 5
+          this.state.settings.gutter * 5
         );
       })
       .attr('height', () => {
-        return Math.min(dayScale.bandwidth(), this.settings.max_block_height);
+        return Math.min(
+          dayScale.bandwidth(),
+          this.state.settings.max_block_height
+        );
       })
       .attr('transform', (d) => {
         return `translate(${weekScale(moment(d.date).week())}, 
@@ -1161,11 +1210,12 @@ export class CalendarHeatmap extends Component {
       });
 
     let item_width =
-      (this.settings.width - this.settings.label_padding) / week_labels.length -
-      this.settings.gutter * 5;
+      (this.state.settings.width - this.state.settings.label_padding) /
+        week_labels.length -
+      this.state.settings.gutter * 5;
     let itemScale = scaleLinear().rangeRound([0, item_width]);
 
-    let item_gutter = this.settings.item_gutter;
+    let item_gutter = this.state.settings.item_gutter;
     item_block
       .selectAll('.item-block-rect')
       .data((d) => d.summary)
@@ -1186,7 +1236,10 @@ export class CalendarHeatmap extends Component {
         return Math.max(itemScale(d.value) - item_gutter, 1);
       })
       .attr('height', () => {
-        return Math.min(dayScale.bandwidth(), this.settings.max_block_height);
+        return Math.min(
+          dayScale.bandwidth(),
+          this.state.settings.max_block_height
+        );
       })
       .attr('fill', (d) => colorGenerator(d.value))
       .style('opacity', 0)
@@ -1206,11 +1259,11 @@ export class CalendarHeatmap extends Component {
       .delay(() => {
         return (
           (Math.cos(Math.PI * Math.random()) + 1) *
-          this.settings.transition_duration
+          this.state.settings.transition_duration
         );
       })
       .duration(() => {
-        return this.settings.transition_duration;
+        return this.state.settings.transition_duration;
       })
       .ease(easeLinear)
       .style('opacity', 1)
@@ -1244,7 +1297,7 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .text((d) => {
         return `Week ${d.week()}`;
@@ -1252,7 +1305,7 @@ export class CalendarHeatmap extends Component {
       .attr('x', (d) => {
         return weekScale(d.week());
       })
-      .attr('y', this.settings.label_padding / 2)
+      .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (event, weekday) => {
         if (this.in_transition) {
           return;
@@ -1261,7 +1314,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-week')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             return moment(d.date).week() === weekday.week() ? 1 : 0.1;
@@ -1275,7 +1328,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-week')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 1);
       });
@@ -1290,13 +1343,13 @@ export class CalendarHeatmap extends Component {
       .attr('class', 'label label-day')
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
-      .attr('x', this.settings.label_padding / 3)
+      .attr('x', this.state.settings.label_padding / 3)
       .attr('y', (d, i) => {
         return dayScale(i) + dayScale.bandwidth() / 1.75;
       })
       .style('text-anchor', 'left')
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .text((d) => {
         return moment(d).format('dddd')[0];
@@ -1310,7 +1363,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-week')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             return moment(d.date).day() === selected_day.day() ? 1 : 0.1;
@@ -1324,7 +1377,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block-week')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 1);
       });
@@ -1351,7 +1404,10 @@ export class CalendarHeatmap extends Component {
       return project.name;
     });
     let projectScale = scaleBand()
-      .rangeRound([this.settings.label_padding, this.settings.height])
+      .rangeRound([
+        this.state.settings.label_padding,
+        this.state.settings.height,
+      ])
       .domain(project_labels);
 
     // Define beginning and end of the day
@@ -1375,7 +1431,7 @@ export class CalendarHeatmap extends Component {
     );
 
     let itemScale = scaleTime()
-      .range([this.settings.label_padding * 2, this.settings.width])
+      .range([this.state.settings.label_padding * 2, this.state.settings.width])
       .domain([
         moment(this.selected.date).startOf('day'),
         moment(this.selected.date).endOf('day'),
@@ -1401,7 +1457,7 @@ export class CalendarHeatmap extends Component {
       .attr('height', () => {
         return Math.min(
           projectScale.bandwidth(),
-          this.settings.max_block_height
+          this.state.settings.max_block_height
         );
       })
       .attr('fill', (d) => colorGenerator(d.value))
@@ -1428,11 +1484,11 @@ export class CalendarHeatmap extends Component {
       .delay(() => {
         return (
           (Math.cos(Math.PI * Math.random()) + 1) *
-          this.settings.transition_duration
+          this.state.settings.transition_duration
         );
       })
       .duration(() => {
-        return this.settings.transition_duration;
+        return this.state.settings.transition_duration;
       })
       .ease(easeLinear)
       .style('opacity', 0.5)
@@ -1461,7 +1517,7 @@ export class CalendarHeatmap extends Component {
       moment(this.selected.date).endOf('day')
     );
     let timeScale = scaleTime()
-      .range([this.settings.label_padding * 2, this.settings.width])
+      .range([this.state.settings.label_padding * 2, this.state.settings.width])
       .domain([0, timeLabels.length]);
     this.labels.selectAll('.label-time').remove();
     this.labels
@@ -1473,7 +1529,7 @@ export class CalendarHeatmap extends Component {
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .text((d) => {
         return moment(d).format('HH:mm');
@@ -1481,7 +1537,7 @@ export class CalendarHeatmap extends Component {
       .attr('x', (d, i) => {
         return timeScale(i);
       })
-      .attr('y', this.settings.label_padding / 2)
+      .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (event, d) => {
         if (this.in_transition) {
           return;
@@ -1491,7 +1547,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             let start = itemScale(moment(d.date));
@@ -1507,13 +1563,13 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 0.5);
       });
 
     // Add project labels
-    let label_padding = this.settings.label_padding;
+    let label_padding = this.state.settings.label_padding;
     this.labels.selectAll('.label-project').remove();
     this.labels
       .selectAll('.label-project')
@@ -1523,7 +1579,7 @@ export class CalendarHeatmap extends Component {
       .attr('class', 'label label-project')
       .style('cursor', 'pointer')
       .style('fill', 'rgb(170, 170, 170)')
-      .attr('x', this.settings.gutter)
+      .attr('x', this.state.settings.gutter)
       .attr('y', (d) => {
         return projectScale(d) + projectScale.bandwidth() / 2;
       })
@@ -1532,7 +1588,7 @@ export class CalendarHeatmap extends Component {
       })
       .style('text-anchor', 'left')
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .text((d) => d)
       .each(function () {
@@ -1553,7 +1609,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', (d) => {
             return d.name === project ? 1 : 0.1;
@@ -1567,7 +1623,7 @@ export class CalendarHeatmap extends Component {
         this.items
           .selectAll('.item-block')
           .transition()
-          .duration(this.settings.transition_duration)
+          .duration(this.state.settings.transition_duration)
           .ease(easeLinear)
           .style('opacity', 0.5);
       });
@@ -1615,26 +1671,26 @@ export class CalendarHeatmap extends Component {
       });
     button
       .append('circle')
-      .attr('cx', this.settings.label_padding / 2.25)
-      .attr('cy', this.settings.label_padding / 2.5)
-      .attr('r', this.settings.item_size / 2);
+      .attr('cx', this.state.settings.label_padding / 2.25)
+      .attr('cy', this.state.settings.label_padding / 2.5)
+      .attr('r', this.state.settings.item_size / 2);
     button
       .append('text')
       .style('stroke-width', 1)
       .style('text-anchor', 'middle')
       .style('fill', 'rgb(170, 170, 170)')
-      .attr('x', this.settings.label_padding / 2.25)
-      .attr('y', this.settings.label_padding / 2.5)
+      .attr('x', this.state.settings.label_padding / 2.25)
+      .attr('y', this.state.settings.label_padding / 2.5)
       .attr('dy', () => {
-        return Math.floor(this.settings.width / 100) / 3;
+        return Math.floor(this.state.settings.width / 100) / 3;
       })
       .attr('font-size', () => {
-        return `${Math.floor(this.settings.label_padding / 3)}px`;
+        return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
       .html('&#x2190');
     button
       .transition()
-      .duration(this.settings.transition_duration)
+      .duration(this.state.settings.transition_duration)
       .ease(easeLinear)
       .style('opacity', 1);
   }
@@ -1646,7 +1702,7 @@ export class CalendarHeatmap extends Component {
     this.items
       .selectAll('.item-block-year')
       .transition()
-      .duration(this.settings.transition_duration)
+      .duration(this.state.settings.transition_duration)
       .ease(easeLinear)
       .style('opacity', 0)
       .remove();
@@ -1660,7 +1716,7 @@ export class CalendarHeatmap extends Component {
     this.items
       .selectAll('.item-circle')
       .transition()
-      .duration(this.settings.transition_duration)
+      .duration(this.state.settings.transition_duration)
       .ease(easeLinear)
       .style('opacity', 0)
       .remove();
@@ -1677,11 +1733,13 @@ export class CalendarHeatmap extends Component {
       .selectAll('.item-block-month')
       .selectAll('.item-block-rect')
       .transition()
-      .duration(this.settings.transition_duration)
+      .duration(this.state.settings.transition_duration)
       .ease(easeLinear)
       .style('opacity', 0)
       .attr('x', (d, i) => {
-        return i % 2 === 0 ? -this.settings.width / 3 : this.settings.width / 3;
+        return i % 2 === 0
+          ? -this.state.settings.width / 3
+          : this.state.settings.width / 3;
       })
       .remove();
     this.labels.selectAll('.label-day').remove();
@@ -1697,11 +1755,13 @@ export class CalendarHeatmap extends Component {
       .selectAll('.item-block-week')
       .selectAll('.item-block-rect')
       .transition()
-      .duration(this.settings.transition_duration)
+      .duration(this.state.settings.transition_duration)
       .ease(easeLinear)
       .style('opacity', 0)
       .attr('x', (d, i) => {
-        return i % 2 === 0 ? -this.settings.width / 3 : this.settings.width / 3;
+        return i % 2 === 0
+          ? -this.state.settings.width / 3
+          : this.state.settings.width / 3;
       })
       .remove();
     this.labels.selectAll('.label-day').remove();
@@ -1716,11 +1776,13 @@ export class CalendarHeatmap extends Component {
     this.items
       .selectAll('.item-block')
       .transition()
-      .duration(this.settings.transition_duration)
+      .duration(this.state.settings.transition_duration)
       .ease(easeLinear)
       .style('opacity', 0)
       .attr('x', (d, i) => {
-        return i % 2 === 0 ? -this.settings.width / 3 : this.settings.width / 3;
+        return i % 2 === 0
+          ? -this.state.settings.width / 3
+          : this.state.settings.width / 3;
       })
       .remove();
     this.labels.selectAll('.label-time').remove();
@@ -1735,7 +1797,7 @@ export class CalendarHeatmap extends Component {
     this.buttons
       .selectAll('.button')
       .transition()
-      .duration(this.settings.transition_duration)
+      .duration(this.state.settings.transition_duration)
       .ease(easeLinear)
       .style('opacity', 0)
       .remove();
