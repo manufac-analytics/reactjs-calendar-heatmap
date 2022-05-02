@@ -653,7 +653,6 @@ export class CalendarHeatmap extends Component<
       .on('mouseenter', (_event, d) => {
         if (this.state.in_transition === false) {
           let selected_day = d;
-          console.log(d.getDate());
           this.items
             .selectAll<SVGRectElement, CalendarHeatmapDatum>('.item-circle')
             .transition()
@@ -739,9 +738,10 @@ export class CalendarHeatmap extends Component<
       );
 
     // Add month data items to the overview
-    let item_block = this.items.selectAll('.item-block-month').data(month_data);
-    item_block.exit().remove();
-    item_block
+    this.items.selectAll('.item-block-month').exit().remove();
+    let item_block = this.items
+      .selectAll('.item-block-month')
+      .data(month_data)
       .enter()
       .append('g')
       .attr('class', 'item item-block-month')
