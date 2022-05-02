@@ -65,34 +65,23 @@ export class CalendarHeatmap extends Component {
     this.ref = createRef();
   }
 
-  /**
-   *
-   * @param {import('./interfaces').CalendarHeatmapProps} nextProps
-   * @param {import('./interfaces').CalendarHeatmapState} prevState
-   * @returns
-   */
-  static getDerivedStateFromProps(nextProps, prevState) {
-    /**
-     * @type {import('./interfaces').CalendarHeatmapSettings | null}
-     */
-    let output = null;
-    if (nextProps.data !== prevState.data) {
-      return {
-        prevState,
-        data: calculateSummary(nextProps.data),
-      };
-    }
-    return output;
-  }
-
   componentDidMount() {
     this.createElements();
     this.drawChart();
     window.addEventListener('resize', this.calcDimensions);
   }
 
-  componentDidUpdate() {
+  /**
+   *
+   * @param {import('./interfaces').CalendarHeatmapProps} prevProps
+   */
+  componentDidUpdate(prevProps) {
     this.drawChart();
+    if (prevProps.data !== this.props.data) {
+      this.setState((prev) => {
+        return { ...prev, data: calculateSummary(this.props.data) };
+      });
+    }
   }
 
   componentWillUnmount() {
