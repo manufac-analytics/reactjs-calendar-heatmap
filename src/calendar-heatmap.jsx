@@ -49,10 +49,10 @@ export class CalendarHeatmap extends Component {
         tooltip_width: 250,
         tooltip_padding: 15,
       },
+      in_transition: false,
     };
 
     // Potential states
-    this.in_transition = false;
     this.overview = this.props.overview;
     this.history = ['global'];
     this.selected = {};
@@ -240,12 +240,12 @@ export class CalendarHeatmap extends Component {
       })
       .attr('fill', (d) => colorGenerator(d.total))
       .on('click', (_event, datum) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
         // Set in_transition flag
-        this.in_transition = true;
+        this.setState((prev) => ({ ...prev, in_transition: true }));
 
         // Set selected date to the one clicked on
         // 'datum' provides the data that this element contains. Ref: https://github.com/d3/d3-selection/blob/main/README.md#handling-events
@@ -263,13 +263,13 @@ export class CalendarHeatmap extends Component {
       })
       .style('opacity', 0)
       .on('mouseover', (_event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
         this.props.onTooltip?.({ value: d });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
         this.props.onHideTooltip?.();
@@ -300,7 +300,7 @@ export class CalendarHeatmap extends Component {
             });
         },
         () => {
-          this.in_transition = false;
+          this.setState((prev) => ({ ...prev, in_transition: false }));
         }
       );
 
@@ -325,7 +325,7 @@ export class CalendarHeatmap extends Component {
       })
       .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (_event, year_label) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -339,7 +339,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -351,12 +351,12 @@ export class CalendarHeatmap extends Component {
           .style('opacity', 1);
       })
       .on('click', (_event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
         // Set in_transition flag
-        this.in_transition = true;
+        this.setState((prev) => ({ ...prev, in_transition: true }));
 
         // Set selected year to the one clicked on
         this.selected = { date: d };
@@ -468,7 +468,7 @@ export class CalendarHeatmap extends Component {
         return d.total > 0 ? finalColor : 'transparent';
       })
       .on('click', (_event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -477,7 +477,7 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        this.in_transition = true;
+        this.setState((prev) => ({ ...prev, in_transition: true }));
 
         // Set selected date to the one clicked on
         this.selected = d;
@@ -493,7 +493,7 @@ export class CalendarHeatmap extends Component {
         this.drawChart();
       })
       .on('mouseover', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -550,7 +550,7 @@ export class CalendarHeatmap extends Component {
         this.props.onTooltip?.({ value: d });
       })
       .on('mouseout', (event, _d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -608,7 +608,7 @@ export class CalendarHeatmap extends Component {
             });
         },
         () => {
-          this.in_transition = false;
+          this.setState((prev) => ({ ...prev, in_transition: false }));
         }
       );
 
@@ -637,7 +637,7 @@ export class CalendarHeatmap extends Component {
       })
       .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -652,7 +652,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -664,7 +664,7 @@ export class CalendarHeatmap extends Component {
           .style('opacity', 1);
       })
       .on('click', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -684,7 +684,7 @@ export class CalendarHeatmap extends Component {
         // Set selected month to the one clicked on
         this.selected = { date: d };
 
-        this.in_transition = true;
+        this.setState((prev) => ({ ...prev, in_transition: true }));
 
         // Hide tooltip
         this.props.onHideTooltip?.();
@@ -730,7 +730,7 @@ export class CalendarHeatmap extends Component {
         return moment(d).format('dddd')[0];
       })
       .on('mouseenter', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -745,7 +745,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -855,7 +855,7 @@ export class CalendarHeatmap extends Component {
       })
       .attr('offset', 0)
       .on('click', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -864,7 +864,7 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        this.in_transition = true;
+        this.setState((prev) => ({ ...prev, in_transition: true }));
 
         // Set selected date to the one clicked on
         this.selected = d;
@@ -915,13 +915,13 @@ export class CalendarHeatmap extends Component {
       .attr('fill', (d) => colorGenerator(d.value))
       .style('opacity', 0)
       .on('mouseover', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
         this.props.onTooltip?.({ value: d });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
         this.props.onHideTooltip?.();
@@ -953,7 +953,7 @@ export class CalendarHeatmap extends Component {
             });
         },
         () => {
-          this.in_transition = false;
+          this.setState((prev) => ({ ...prev, in_transition: false }));
         }
       );
 
@@ -978,7 +978,7 @@ export class CalendarHeatmap extends Component {
       })
       .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (event, weekday) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -992,7 +992,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1004,7 +1004,7 @@ export class CalendarHeatmap extends Component {
           .style('opacity', 1);
       })
       .on('click', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1021,7 +1021,7 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        this.in_transition = true;
+        this.setState((prev) => ({ ...prev, in_transition: true }));
 
         // Set selected month to the one clicked on
         this.selected = { date: d };
@@ -1059,7 +1059,7 @@ export class CalendarHeatmap extends Component {
         return moment(d).format('dddd')[0];
       })
       .on('mouseenter', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1074,7 +1074,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1184,7 +1184,7 @@ export class CalendarHeatmap extends Component {
       })
       .attr('offset', 0)
       .on('click', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1193,7 +1193,7 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        this.in_transition = true;
+        this.setState((prev) => ({ ...prev, in_transition: true }));
 
         // Set selected date to the one clicked on
         this.selected = d;
@@ -1244,13 +1244,13 @@ export class CalendarHeatmap extends Component {
       .attr('fill', (d) => colorGenerator(d.value))
       .style('opacity', 0)
       .on('mouseover', (_event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
         this.props.onTooltip?.({ value: d });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
         this.props.onHideTooltip?.();
@@ -1282,7 +1282,7 @@ export class CalendarHeatmap extends Component {
             });
         },
         () => {
-          this.in_transition = false;
+          this.setState((prev) => ({ ...prev, in_transition: false }));
         }
       );
 
@@ -1307,7 +1307,7 @@ export class CalendarHeatmap extends Component {
       })
       .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (event, weekday) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1321,7 +1321,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1355,7 +1355,7 @@ export class CalendarHeatmap extends Component {
         return moment(d).format('dddd')[0];
       })
       .on('mouseenter', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1370,7 +1370,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1463,14 +1463,14 @@ export class CalendarHeatmap extends Component {
       .attr('fill', (d) => colorGenerator(d.value))
       .style('opacity', 0)
       .on('mouseover', (_event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
         this.props.onTooltip?.({ value: d });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
         this.props.onHideTooltip?.();
@@ -1507,7 +1507,7 @@ export class CalendarHeatmap extends Component {
             });
         },
         () => {
-          this.in_transition = false;
+          this.setState((prev) => ({ ...prev, in_transition: false }));
         }
       );
 
@@ -1539,7 +1539,7 @@ export class CalendarHeatmap extends Component {
       })
       .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (event, d) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1556,7 +1556,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1602,7 +1602,7 @@ export class CalendarHeatmap extends Component {
         }
       })
       .on('mouseenter', (event, project) => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1616,7 +1616,7 @@ export class CalendarHeatmap extends Component {
           });
       })
       .on('mouseout', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
@@ -1646,12 +1646,12 @@ export class CalendarHeatmap extends Component {
       .style('stroke-width', 2)
       .style('stroke', 'rgb(170, 170, 170)')
       .on('click', () => {
-        if (this.in_transition) {
+        if (this.state.in_transition) {
           return;
         }
 
         // Set transition boolean
-        this.in_transition = true;
+        this.setState((prev) => ({ ...prev, in_transition: true }));
 
         // Clean the canvas from whichever overview type was on
         if (this.overview === 'year') {
