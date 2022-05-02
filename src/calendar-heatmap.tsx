@@ -738,7 +738,7 @@ export class CalendarHeatmap extends Component<
       );
 
     // Add month data items to the overview
-    this.items.selectAll('.item-block-month').exit().remove();
+    this.items.selectAll('.item-block-month').remove();
     let item_block = this.items
       .selectAll('.item-block-month')
       .data(month_data)
