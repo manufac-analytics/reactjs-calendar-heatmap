@@ -71,9 +71,9 @@ function sortSummaryDictionary(
 
 // Calculate daily summary if that was not provided
 export function calculateSummary(data: CalendarHeatmapDatum[]): CalendarHeatmapDatum[] {
-  const output = data;
+  let output = data;
   if (Array.isArray(data[0].summary) === false) {
-    data.map((d) => {
+    output = data.map((d) => {
       // Create project dictionary: Record<string, {name: string; value: number}>
       const summaryDictionary = createSummaryDictionary(d.details);
       // Update "summary" property of the array element

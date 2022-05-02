@@ -1700,7 +1700,7 @@ export class CalendarHeatmap extends Component<
   }
 
   componentDidUpdate(
-    _prevProps: CalendarHeatmapProps,
+    prevProps: CalendarHeatmapProps,
     prevState: CalendarHeatmapState
   ) {
     if (
@@ -1714,6 +1714,11 @@ export class CalendarHeatmap extends Component<
     }
     if (this.state.history.at(-1) !== prevState.history.at(-1)) {
       this.drawChart();
+    }
+    if (prevProps.data !== this.props.data) {
+      this.setState((prev) => {
+        return { ...prev, data: calculateSummary(this.props.data) };
+      });
     }
   }
 
