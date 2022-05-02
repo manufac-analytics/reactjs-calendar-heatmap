@@ -70,18 +70,18 @@ function sortSummaryDictionary(
 }
 
 // Calculate daily summary if that was not provided
-export function addSummary(data: CalendarHeatmapDatum[]): void {
-  if (Array.isArray(data)) {
-    if (data[0].summary === null || data[0].summary === undefined) {
-      data.forEach((d) => {
-        // Create project dictionary: Record<string, {name: string; value: number}>
-        const summaryDictionary = createSummaryDictionary(d.details);
-        // Update "summary" property of the array element
-        const summary = sortSummaryDictionary(summaryDictionary);
-        d.summary = summary;
-      });
-    }
+export function calculateSummary(data: CalendarHeatmapDatum[]): CalendarHeatmapDatum[] {
+  let output = data;
+  if (Array.isArray(data[0].summary) === false) {
+    output = data.map((d) => {
+      // Create project dictionary: Record<string, {name: string; value: number}>
+      const summaryDictionary = createSummaryDictionary(d.details);
+      // Update "summary" property of the array element
+      const summary = sortSummaryDictionary(summaryDictionary);
+      return { ...d, summary };
+    });
   }
+  return output;
 }
 
 export function getYearSummary(
