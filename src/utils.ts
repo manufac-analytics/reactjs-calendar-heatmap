@@ -70,7 +70,9 @@ function sortSummaryDictionary(
 }
 
 // Calculate daily summary if that was not provided
-export function calculateSummary(data: CalendarHeatmapDatum[]): CalendarHeatmapDatum[] {
+export function calculateSummary(
+  data: CalendarHeatmapDatum[]
+): CalendarHeatmapDatum[] {
   let output = data;
   if (Array.isArray(data[0].summary) === false) {
     output = data.map((d) => {
