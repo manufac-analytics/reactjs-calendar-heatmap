@@ -564,14 +564,16 @@ export class CalendarHeatmap extends Component<
       .attr('y', this.state.settings.label_padding / 2)
       .on('mouseenter', (_event, d) => {
         if (this.state.in_transition === false) {
-          let selected_month = moment(d);
+          let selected_month = d;
           this.items
-            .selectAll<SVGRectElement, Date>('.item-circle')
+            .selectAll<SVGRectElement, CalendarHeatmapDatum>('.item-circle')
             .transition()
             .duration(this.state.settings.transition_duration)
             .ease(easeLinear)
             .style('opacity', (d) => {
-              return moment(d).isSame(selected_month, 'month') ? 1 : 0.1;
+              return new Date(d.date).getMonth() === selected_month.getMonth()
+                ? 1
+                : 0.1;
             });
         }
       })
@@ -650,14 +652,17 @@ export class CalendarHeatmap extends Component<
       })
       .on('mouseenter', (_event, d) => {
         if (this.state.in_transition === false) {
-          let selected_day = moment(d);
+          let selected_day = d;
+          console.log(d.getDate());
           this.items
-            .selectAll<SVGRectElement, Date>('.item-circle')
+            .selectAll<SVGRectElement, CalendarHeatmapDatum>('.item-circle')
             .transition()
             .duration(this.state.settings.transition_duration)
             .ease(easeLinear)
             .style('opacity', (d) => {
-              return moment(d).day() === selected_day.day() ? 1 : 0.1;
+              return new Date(d.date).getDay() === selected_day.getDay()
+                ? 1
+                : 0.1;
             });
         }
       })
