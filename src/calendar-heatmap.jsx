@@ -739,10 +739,9 @@ export class CalendarHeatmap extends Component {
     let month_data = this.props.data.filter((d) => {
       return start_of_month <= moment(d.date) && moment(d.date) < end_of_month;
     });
-    const monthSummaries = month_data.flatMap((e) => e.summary);
 
     // Calculate min and max value of month in the dataset
-    const [min_value, max_value] = extent(monthSummaries, (d) => d.value);
+    const [min_value, max_value] = extent(month_data, (d) => d.total);
 
     // Generates color generator function
     const colorGenerator = createColorGenerator(
@@ -777,11 +776,11 @@ export class CalendarHeatmap extends Component {
 
     // Add month data items to the overview
     this.items.selectAll('.item-block-month').remove();
-    let item_block = this.items
+    this.items
       .selectAll('.item-block-month')
       .data(month_data)
       .enter()
-      .append('g')
+      .append('rect')
       .attr('class', 'item item-block-month')
       .style('cursor', 'pointer')
       .attr('width', () => {
@@ -794,18 +793,12 @@ export class CalendarHeatmap extends Component {
       .attr('height', () => {
         return Math.min(dayScale.bandwidth(), this.settings.max_block_height);
       })
+      .attr('fill', (d) => colorGenerator(d.total))
       .attr('transform', (d) => {
         return `translate(${weekScale(moment(d.date).week())}, ${
           dayScale(moment(d.date).weekday()) + dayScale.bandwidth() / 1.75 - 15
         })`;
       })
-      .attr('total', (d) => {
-        return d.total;
-      })
-      .attr('date', (d) => {
-        return d.date;
-      })
-      .attr('offset', 0)
       .on('click', (event, d) => {
         if (this.in_transition) {
           return;
@@ -830,37 +823,7 @@ export class CalendarHeatmap extends Component {
         // Redraw the chart
         this.overview = 'day';
         this.drawChart();
-      });
-
-    let item_width =
-      (this.settings.width - this.settings.label_padding) / week_labels.length -
-      this.settings.gutter * 5;
-    let itemScale = scaleLinear().rangeRound([0, item_width]);
-
-    let item_gutter = this.settings.item_gutter;
-    item_block
-      .selectAll('.item-block-rect')
-      .data((d) => d.summary)
-      .enter()
-      .append('rect')
-      .attr('class', 'item item-block-rect')
-      .style('cursor', 'pointer')
-      .attr('x', function (d) {
-        let total = parseInt(select(this.parentNode).attr('total'));
-        let offset = parseInt(select(this.parentNode).attr('offset'));
-        itemScale.domain([0, total]);
-        select(this.parentNode).attr('offset', offset + itemScale(d.value));
-        return offset;
       })
-      .attr('width', function (d) {
-        let total = parseInt(select(this.parentNode).attr('total'));
-        itemScale.domain([0, total]);
-        return Math.max(itemScale(d.value) - item_gutter, 1);
-      })
-      .attr('height', () => {
-        return Math.min(dayScale.bandwidth(), this.settings.max_block_height);
-      })
-      .attr('fill', (d) => colorGenerator(d.value))
       .style('opacity', 0)
       .on('mouseover', (event, d) => {
         if (this.in_transition) {
@@ -1663,7 +1626,6 @@ export class CalendarHeatmap extends Component {
   removeMonthOverview() {
     this.items
       .selectAll('.item-block-month')
-      .selectAll('.item-block-rect')
       .transition()
       .duration(this.settings.transition_duration)
       .ease(easeLinear)
