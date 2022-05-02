@@ -36,7 +36,6 @@ export class CalendarHeatmap extends Component {
      * @type {import('./interfaces').CalendarHeatmapState}
      */
     this.state = {
-      data: calculateSummary(props.data),
       settings: {
         gutter: 5,
         item_gutter: 1,
@@ -50,12 +49,13 @@ export class CalendarHeatmap extends Component {
         tooltip_padding: 15,
       },
       in_transition: false,
+      history:
+        props.overview === 'global'
+          ? [props.overview]
+          : ['global', props.overview ?? 'year'],
+      selected: props.data.at(-1) ?? {},
+      data: calculateSummary(props.data),
     };
-
-    // Potential states
-    this.overview = this.props.overview;
-    this.history = ['global'];
-    this.selected = {};
 
     this.calcDimensions = this.calcDimensions.bind(this);
     this.ref = createRef();
@@ -81,12 +81,14 @@ export class CalendarHeatmap extends Component {
         .attr('width', this.state.settings.width)
         .attr('height', this.state.settings.height);
     }
+    if (this.state.history.at(-1) !== prevState.history.at(-1)) {
+      this.drawChart();
+    }
     if (prevProps.data !== this.props.data) {
       this.setState((prev) => {
         return { ...prev, data: calculateSummary(this.props.data) };
       });
     }
-    this.drawChart();
   }
 
   componentWillUnmount() {
@@ -163,11 +165,6 @@ export class CalendarHeatmap extends Component {
    * Draw global overview (multiple years)
    */
   drawGlobalOverview() {
-    // Add current overview to the history
-    if (this.history[this.history.length - 1] !== this.overview) {
-      this.history.push(this.overview);
-    }
-
     // Define start and end of the dataset | Assumption: this.state.data is in chronological order
     let start = moment(this.state.data[0].date).startOf('year');
     let end = moment(this.state.data[this.state.data.length - 1].date).endOf(
@@ -245,11 +242,11 @@ export class CalendarHeatmap extends Component {
         }
 
         // Set in_transition flag
-        this.setState((prev) => ({ ...prev, in_transition: true }));
-
-        // Set selected date to the one clicked on
-        // 'datum' provides the data that this element contains. Ref: https://github.com/d3/d3-selection/blob/main/README.md#handling-events
-        this.selected = datum;
+        this.setState((prev) => ({
+          ...prev,
+          in_transition: true,
+          selected: datum,
+        }));
 
         // Hide tooltip
         this.props.onHideTooltip?.();
@@ -356,10 +353,11 @@ export class CalendarHeatmap extends Component {
         }
 
         // Set in_transition flag
-        this.setState((prev) => ({ ...prev, in_transition: true }));
-
-        // Set selected year to the one clicked on
-        this.selected = { date: d };
+        this.setState((prev) => ({
+          ...prev,
+          in_transition: true,
+          selected: { date: d },
+        }));
 
         // Hide tooltip
         this.props.onHideTooltip?.();
@@ -377,14 +375,9 @@ export class CalendarHeatmap extends Component {
    * Draw year overview
    */
   drawYearOverview() {
-    // Add current overview to the history
-    if (this.history[this.history.length - 1] !== this.overview) {
-      this.history.push(this.overview);
-    }
-
     // Define start and end date of the selected year
-    let start_of_year = moment(this.selected.date).startOf('year');
-    let end_of_year = moment(this.selected.date).endOf('year');
+    let start_of_year = moment(this.state.selected.date).startOf('year');
+    let end_of_year = moment(this.state.selected.date).endOf('year');
 
     // Filter data down to the selected year
     let year_data = this.state.data.filter((d) => {
@@ -477,10 +470,11 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        this.setState((prev) => ({ ...prev, in_transition: true }));
-
-        // Set selected date to the one clicked on
-        this.selected = d;
+        this.setState((prev) => ({
+          ...prev,
+          in_transition: true,
+          selected: d,
+        }));
 
         // Hide tooltip
         this.props.onHideTooltip?.();
@@ -681,10 +675,11 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        // Set selected month to the one clicked on
-        this.selected = { date: d };
-
-        this.setState((prev) => ({ ...prev, in_transition: true }));
+        this.setState((prev) => ({
+          ...prev,
+          in_transition: true,
+          selected: { date: d },
+        }));
 
         // Hide tooltip
         this.props.onHideTooltip?.();
@@ -765,14 +760,9 @@ export class CalendarHeatmap extends Component {
    * Draw month overview
    */
   drawMonthOverview() {
-    // Add current overview to the history
-    if (this.history[this.history.length - 1] !== this.overview) {
-      this.history.push(this.overview);
-    }
-
     // Define beginning and end of the month
-    let start_of_month = moment(this.selected.date).startOf('month');
-    let end_of_month = moment(this.selected.date).endOf('month');
+    let start_of_month = moment(this.state.selected.date).startOf('month');
+    let end_of_month = moment(this.state.selected.date).endOf('month');
 
     // Filter data down to the selected month
     let month_data = this.state.data.filter((d) => {
@@ -864,10 +854,11 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        this.setState((prev) => ({ ...prev, in_transition: true }));
-
-        // Set selected date to the one clicked on
-        this.selected = d;
+        this.setState((prev) => ({
+          ...prev,
+          in_transition: true,
+          selected: d,
+        }));
 
         // Hide tooltip
         this.props.onHideTooltip?.();
@@ -1021,10 +1012,11 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        this.setState((prev) => ({ ...prev, in_transition: true }));
-
-        // Set selected month to the one clicked on
-        this.selected = { date: d };
+        this.setState((prev) => ({
+          ...prev,
+          in_transition: true,
+          selected: { date: d },
+        }));
 
         // Hide tooltip
         this.props.onHideTooltip?.();
@@ -1094,14 +1086,9 @@ export class CalendarHeatmap extends Component {
    * Draw week overview
    */
   drawWeekOverview() {
-    // Add current overview to the history
-    if (this.history[this.history.length - 1] !== this.overview) {
-      this.history.push(this.overview);
-    }
-
     // Define beginning and end of the week
-    let start_of_week = moment(this.selected.date).startOf('week');
-    let end_of_week = moment(this.selected.date).endOf('week');
+    let start_of_week = moment(this.state.selected.date).startOf('week');
+    let end_of_week = moment(this.state.selected.date).endOf('week');
 
     // Filter data down to the selected week
     let week_data = this.state.data.filter((d) => {
@@ -1193,10 +1180,11 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        this.setState((prev) => ({ ...prev, in_transition: true }));
-
-        // Set selected date to the one clicked on
-        this.selected = d;
+        this.setState((prev) => ({
+          ...prev,
+          in_transition: true,
+          selected: d,
+        }));
 
         // Hide tooltip
         this.props.onHideTooltip?.();
@@ -1390,17 +1378,7 @@ export class CalendarHeatmap extends Component {
    * Draw day overview
    */
   drawDayOverview() {
-    // Add current overview to the history
-    if (this.history[this.history.length - 1] !== this.overview) {
-      this.history.push(this.overview);
-    }
-
-    // Initialize selected date to today if it was not set
-    if (!Object.keys(this.selected).length) {
-      this.selected = this.state.data[this.state.data.length - 1];
-    }
-
-    let project_labels = this.selected.summary.map((project) => {
+    let project_labels = this.state.selected.summary.map((project) => {
       return project.name;
     });
     let projectScale = scaleBand()
@@ -1411,8 +1389,8 @@ export class CalendarHeatmap extends Component {
       .domain(project_labels);
 
     // Define beginning and end of the day
-    let start_of_day = moment(this.selected.date).startOf('day');
-    let end_of_day = moment(this.selected.date).endOf('day');
+    let start_of_day = moment(this.state.selected.date).startOf('day');
+    let end_of_day = moment(this.state.selected.date).endOf('day');
 
     // Filter data down to the selected week
     let day_data = this.state.data.filter((d) => {
@@ -1433,13 +1411,13 @@ export class CalendarHeatmap extends Component {
     let itemScale = scaleTime()
       .range([this.state.settings.label_padding * 2, this.state.settings.width])
       .domain([
-        moment(this.selected.date).startOf('day'),
-        moment(this.selected.date).endOf('day'),
+        moment(this.state.selected.date).startOf('day'),
+        moment(this.state.selected.date).endOf('day'),
       ]);
     this.items.selectAll('.item-block').remove();
     this.items
       .selectAll('.item-block')
-      .data(this.selected.details)
+      .data(this.state.selected.details)
       .enter()
       .append('rect')
       .attr('class', 'item item-block')
@@ -1513,8 +1491,8 @@ export class CalendarHeatmap extends Component {
 
     // Add time labels
     let timeLabels = timeHours(
-      moment(this.selected.date).startOf('day'),
-      moment(this.selected.date).endOf('day')
+      moment(this.state.selected.date).startOf('day'),
+      moment(this.state.selected.date).endOf('day')
     );
     let timeScale = scaleTime()
       .range([this.state.settings.label_padding * 2, this.state.settings.width])
@@ -1650,9 +1628,6 @@ export class CalendarHeatmap extends Component {
           return;
         }
 
-        // Set transition boolean
-        this.setState((prev) => ({ ...prev, in_transition: true }));
-
         // Clean the canvas from whichever overview type was on
         if (this.overview === 'year') {
           this.removeYearOverview();
@@ -1665,9 +1640,13 @@ export class CalendarHeatmap extends Component {
         }
 
         // Redraw the chart
-        this.history.pop();
-        this.overview = this.history.pop();
-        this.drawChart();
+        this.setState((prev) => {
+          return {
+            ...prev,
+            in_transition: true,
+            history: [...prev.history.slice(0, -1)],
+          };
+        });
       });
     button
       .append('circle')
