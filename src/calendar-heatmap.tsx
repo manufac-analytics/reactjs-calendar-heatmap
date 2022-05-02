@@ -254,6 +254,8 @@ export class CalendarHeatmap extends Component<
       .attr('font-size', () => {
         return `${Math.floor(this.state.settings.label_padding / 3)}px`;
       })
+      // Passes what text would be shown in the element
+      .text((d) => d)
       .attr('x', (d) => {
         return yearScale(d) ?? NaN;
       })
@@ -1685,7 +1687,8 @@ export class CalendarHeatmap extends Component<
         tooltip_padding: 15,
       },
       in_transition: false,
-      history: [props.overview ?? 'year'],
+      // First entry for history should be 'global', so that even if the user enters the chart first time he will be able to go back till global overview
+      history: ['global', props.overview ?? 'year'],
       selected: props.data.at(-1) ?? {},
       data: calculateSummary(props.data),
     };
