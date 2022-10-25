@@ -42,7 +42,7 @@ export interface YearOverviewHeatmapProps
 }
 
 export function getYearData(data: CalendarHeatmapDatum[]): YearOverviewData {
-  const { format: monthFormat } = new Intl.DateTimeFormat(undefined, {
+  const dateTimeIntlFormat = new Intl.DateTimeFormat(undefined, {
     month: 'short',
   });
   let dataArray: YearOverviewDatum[] = [];
@@ -56,8 +56,10 @@ export function getYearData(data: CalendarHeatmapDatum[]): YearOverviewData {
         return {
           ...acc,
           // 'format' functions here returns ISO week number (1-53) and day (1-7) of a date. Ref: https://date-fns.org/v2.28.0/docs/format
-          [`${format(date, 'I')},${format(date, 'i')},${monthFormat(date)}`]:
-            curr,
+          [`${format(date, 'I')},${format(
+            date,
+            'i'
+          )},${dateTimeIntlFormat.format(date)}`]: curr,
         };
       },
       {}
@@ -74,7 +76,9 @@ export function getYearData(data: CalendarHeatmapDatum[]): YearOverviewData {
       (acc, curr) => ({
         ...acc,
         // 'format' functions here returns ISO week number (1-53) and day (1-7) of a date. Ref: https://date-fns.org/v2.28.0/docs/format
-        [`${format(curr, 'I')},${format(curr, 'i')},${monthFormat(curr)}`]: {
+        [`${format(curr, 'I')},${format(curr, 'i')},${dateTimeIntlFormat.format(
+          curr
+        )}`]: {
           date: curr.toISOString(),
           total: NaN,
         },
@@ -117,8 +121,8 @@ export function getMonthBoundaryPath(
   yScale: ScaleBand<string>
 ): string {
   // 'format' functions here returns ISO week number (1-53) and day (1-7) of a date. Ref: https://date-fns.org/v2.28.0/docs/format
-  const week = Number.parseInt(format(date, 'I')) - 1; // Substracting by 1 because axis starts from position 0
-  const day = Number.parseInt(format(date, 'i')) - 1; // Substracting by 1 because axis starts from position 0
+  const week = Number.parseInt(format(date, 'I'), 10) - 1; // Substracting by 1 because axis starts from position 0
+  const day = Number.parseInt(format(date, 'i'), 10) - 1; // Substracting by 1 because axis starts from position 0
   return `${
     day === 0
       ? /**

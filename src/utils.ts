@@ -74,7 +74,7 @@ function axisLabelHide<Domain extends AxisDomain>(
     const firstNodeTransformValue = container
       .select<SVGTextElement>('text')
       .attr('transform');
-    container.selectAll<SVGTextElement, string>('text').each(function () {
+    container.selectAll<SVGTextElement, string>('text').each(function hide() {
       if (select(this).attr('transform') !== firstNodeTransformValue) {
         select(this).attr('visibility', 'hidden');
       }
